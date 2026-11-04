@@ -18,6 +18,7 @@ The format follows Keep a Changelog conventions; generated projects should adopt
 - Repository structure and local Markdown-link validator.
 - GitHub administration automation with dry-run, explicit apply, and read-back verification.
 - Repository rollout guidance for applying the baseline safely to existing repositories.
+- OpenCode CLI Make targets: interactive run, foreground/background prompts, free-model shortcuts, and per-provider model listings (auto-loads `.env`).
 
 ### Changed
 

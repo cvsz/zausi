@@ -140,7 +140,10 @@ docs/
 scripts/
   bootstrap.py
   github_admin.py
+  opencode_bg.py
+  opencode_env.py
   validate_repo.py
+model-catalog/
 skills/
 components.d/
 plugins.d/
@@ -160,6 +163,25 @@ README.md
 ROADMAP.md
 SECURITY.md
 ```
+
+## OpenCode CLI workflow
+
+Make targets wrapping the [OpenCode CLI](https://opencode.ai). Each target auto-loads `./.env` (copy from `.env.example`; never commit real keys). Non-interactive prompts default to `--auto-approve deny`; override with `OPENCODE_AUTO_APPROVE=allow|ask`. Requires `opencode` on PATH (`curl -fsSL https://opencode.ai/install | bash`).
+
+```bash
+make opencode                                  # interactive TUI (.env auto-loaded)
+make opencode-prompt PROMPT="..." [OPENCODE_MODEL="provider/model"]
+make opencode-free-prompt PROMPT="..."         # 100% free model (OPENCODE_FREE_MODEL)
+make opencode-bg PROMPT="..."                  # detached run; prints a run id
+make opencode-free-bg PROMPT="..."             # free model, detached
+
+make opencode-models                           # all models known to the CLI
+make opencode-free-models                      # free tier (NVIDIA, OpenCode, Kilo, ...)
+make opencode-nvidia-models                    # Nemotron & NIM catalog
+make opencode-kilo-models                      # Kilo models & free routers
+```
+
+Background runs log to `.tmp/opencode/<run-id>.log`; inspect with `make opencode-bg-status [RUN_ID=x]`, `make opencode-bg-tail RUN_ID=x [N=50]`, `make opencode-bg-list`. Provider listings prefer curated scripts in `model-catalog/` (edit those to match your installed providers); otherwise they fall back to filtering `opencode models`.
 
 ## Principles
 
