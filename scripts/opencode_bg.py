@@ -6,14 +6,19 @@ output to a per-run log file under .tmp/opencode/ so the caller's terminal is
 never blocked and output survives shell exit.
 
 Usage:
-    python3 scripts/opencode_bg.py run -- <opencode args...>
-    python3 scripts/opencode_bg.py status [RUN_ID]
-    python3 scripts/opencode_bg.py tail RUN_ID [N]
-    python3 scripts/opencode_bg.py list
+    python3 scripts/opencode_bg.py [--dir DIR] run -- <opencode args...>
+    python3 scripts/opencode_bg.py [--dir DIR] status [RUN_ID]
+    python3 scripts/opencode_bg.py [--dir DIR] tail RUN_ID [N]
+    python3 scripts/opencode_bg.py [--dir DIR] list
+    python3 scripts/opencode_bg.py [--dir DIR] stop [RUN_ID]
+
+The runs directory defaults to .tmp/opencode/ under the repository root and
+can be overridden with --dir (used by the Makefile's BG_DIR variable).
 
 Exit codes:
     run:     0 launched, 2 invalid usage
     status:  0 completed, 1 running, 2 unknown run id
+    stop:    0 stopped (or already finished), 2 unknown run id
     list:    always 0
 """
 
@@ -23,6 +28,7 @@ import argparse
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -30,7 +36,15 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNS_DIR = ROOT / ".tmp" / "opencode"
+DEFAULT_RUNS_DIR = ROOT / ".tmp" / "opencode"
+
+# Overridable via the --dir global flag (set by the Makefile's BG_DIR).
+RUNS_DIR = DEFAULT_RUNS_DIR
+
+
+def set_runs_dir(path: str) -> None:
+    global RUNS_DIR
+    RUNS_DIR = Path(path)
 
 
 def _runs_dir() -> Path:
@@ -137,18 +151,69 @@ def cmd_list() -> int:
     return 0
 
 
+def cmd_stop(run_id: str | None) -> int:
+    """Terminate a background run (and its process group)."""
+    base = _runs_dir()
+    if run_id is None:
+        # Stop the most recent still-running run.
+        metas = sorted(base.glob("*.json"), reverse=True)
+        for meta in metas:
+            try:
+                data = json.loads(meta.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if _is_running(int(data.get("pid", -1))):
+                run_id = meta.stem
+                break
+        if run_id is None:
+            print("no running background opencode jobs")
+            return 0
+    log_path, pid_path, meta_path = _run_paths(run_id)
+    if not meta_path.exists() and not pid_path.exists():
+        print(f"unknown run id: {run_id}", file=sys.stderr)
+        return 2
+    pid = int(pid_path.read_text(encoding="utf-8")) if pid_path.exists() else -1
+    if pid <= 0 or not _is_running(pid):
+        print(f"run {run_id} already finished")
+        return 0
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    print(f"stopped run {run_id} (pgid {pid}); log: {log_path}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+
+    def _add_dir(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--dir",
+            default=None,
+            help="runs directory (default: .tmp/opencode under the repo root)",
+        )
+
     p_run = sub.add_parser("run")
+    _add_dir(p_run)
     p_run.add_argument("rest", nargs=argparse.REMAINDER)
     p_status = sub.add_parser("status")
+    _add_dir(p_status)
     p_status.add_argument("run_id", nargs="?")
     p_tail = sub.add_parser("tail")
+    _add_dir(p_tail)
     p_tail.add_argument("run_id")
     p_tail.add_argument("n", nargs="?", type=int, default=50)
-    sub.add_parser("list")
+    p_stop = sub.add_parser("stop")
+    _add_dir(p_stop)
+    p_stop.add_argument("run_id", nargs="?")
+    p_list = sub.add_parser("list")
+    _add_dir(p_list)
     ns = parser.parse_args()
+
+    if ns.dir:
+        set_runs_dir(ns.dir)
 
     if ns.command == "run":
         return cmd_run(ns.rest)
@@ -156,6 +221,8 @@ def main() -> int:
         return cmd_status(ns.run_id)
     if ns.command == "tail":
         return cmd_tail(ns.run_id, ns.n)
+    if ns.command == "stop":
+        return cmd_stop(ns.run_id)
     return cmd_list()
 
 

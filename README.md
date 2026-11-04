@@ -181,7 +181,7 @@ make opencode-nvidia-models                    # Nemotron & NIM catalog
 make opencode-kilo-models                      # Kilo models & free routers
 ```
 
-Background runs log to `.tmp/opencode/<run-id>.log`; inspect with `make opencode-bg-status [RUN_ID=x]`, `make opencode-bg-tail RUN_ID=x [N=50]`, `make opencode-bg-list`. Provider listings prefer curated scripts in `model-catalog/` (edit those to match your installed providers); otherwise they fall back to filtering `opencode models`.
+Background runs log to `.tmp/opencode/<run-id>.log`; inspect with `make opencode-bg-status [RUN_ID=x]`, `make opencode-bg-tail RUN_ID=x [N=50]`, `make opencode-bg-list`, or terminate with `make opencode-stop [RUN_ID=x]`. Provider listings prefer curated scripts in `model-catalog/` (edit those to match your installed providers); otherwise they fall back to filtering `opencode models`. Foreground prompt runs are bounded by `OPENCODE_TIMEOUT` (seconds, default 600; set `0` to disable). Default model is the free tier (`OPENCODE_MODEL`/`OPENCODE_FREE_MODEL=opencode/nemotron-3.5-lightning-free`).
 
 ## Principles
 
