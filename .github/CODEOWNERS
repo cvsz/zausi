@@ -1,13 +1,13 @@
 # Replace or extend ownership rules for generated repositories.
-* @cvsz
+* @cvsz/maintainers
 
-/.github/ @cvsz
-/SECURITY.md @cvsz
-/AGENTS.md @cvsz
-/CLAUDE.md @cvsz
-/OPENCODE.md @cvsz
-/ZEAZ-INTRODUCTION.md @cvsz
-/ecc-install.json @cvsz
-/skills/ @cvsz
-/components.d/ @cvsz
-/plugins.d/ @cvsz
+/.github/ @cvsz/maintainers
+/SECURITY.md @cvsz/maintainers
+/AGENTS.md @cvsz/maintainers
+/CLAUDE.md @cvsz/maintainers
+/OPENCODE.md @cvsz/maintainers
+/ZEAZ-INTRODUCTION.md @cvsz/maintainers
+/ecc-install.json @cvsz/maintainers
+/skills/ @cvsz/maintainers
+/components.d/ @cvsz/maintainers
+/plugins.d/ @cvsz/maintainers
