@@ -50,3 +50,12 @@ tmp/
 
 # Service PID files
 *.pid
+
+# Terraform / IaC local artifacts (never commit state or plan files)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+rendered-*.yaml
+rendered-output.yaml
