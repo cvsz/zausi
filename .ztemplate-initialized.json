@@ -1,0 +1,6 @@
+{
+  "name": "zausi",
+  "owner": "cvsz",
+  "codeowner": "cvsz/maintainers",
+  "description": "Zausi service scaffolded from cvsz/ztemplate"
+}
