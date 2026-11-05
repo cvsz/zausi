@@ -1,0 +1,30 @@
+# RSI Sandbox isolation: gVisor runtime class + default-deny network policy
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-rsi-sandbox
+  namespace: ausi-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ausi-core
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ausi-core
+      ports:
+        - protocol: TCP
+          port: 9092 # Kafka/NATS Event Mesh

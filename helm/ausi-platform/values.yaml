@@ -1,0 +1,28 @@
+global:
+  environment: production
+  domain: ausi.internal
+
+kernel:
+  replicaCount: 3
+  image:
+    repository: registry.ausi.internal/core/kernel
+    tag: v1.0.0
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: "32"
+      memory: "128Gi"
+      nvidia.com/gpu: "4"
+    requests:
+      cpu: "16"
+      memory: "64Gi"
+      nvidia.com/gpu: "2"
+
+rsiEngine:
+  enabled: true
+  sandboxNamespace: ausi-sandbox
+  maxConcurrentSimulations: 8
+
+spire:
+  enabled: true
+  trustDomain: ausi.internal

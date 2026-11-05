@@ -18,8 +18,12 @@ The format follows Keep a Changelog conventions; generated projects should adopt
 - Repository structure and local Markdown-link validator.
 - GitHub administration automation with dry-run, explicit apply, and read-back verification.
 - Repository rollout guidance for applying the baseline safely to existing repositories.
+- OpenCode CLI Make targets: interactive run, foreground/background prompts, free-model shortcuts, and per-provider model listings (auto-loads `.env`).
+- ZCoder Enterprise service targets: api/worker/web daemons with pid/log/status/restart lifecycle, install/test/build/typecheck/security quality gates, Authenticode signing pipeline, Docker and PostgreSQL helpers.
 
 ### Changed
+
+- Merged the full ZCoder Enterprise Makefile (services, builds, signing, Docker) with the OpenCode CLI integration; prompts are now passed as a single quoted shell word, foreground runs are bounded by `OPENCODE_TIMEOUT` (default 600s), background runs use per-run logs under `.tmp/opencode/` with new `make opencode-stop`, and default models point at the free tier (`opencode/nemotron-3.5-lightning-free`).
 
 - Reorganized reusable AI documentation into `guides/`, `playbooks/`, and `prompts/`.
 - Pinned baseline first-party GitHub Actions to immutable commit SHAs.

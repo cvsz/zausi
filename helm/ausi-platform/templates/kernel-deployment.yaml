@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ausi-platform.fullname" . }}-kernel
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ausi-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cognitive-engine
+spec:
+  replicas: {{ .Values.kernel.replicaCount }}
+  selector:
+    matchLabels:
+      app: ausi-kernel
+  template:
+    metadata:
+      labels:
+        app: ausi-kernel
+        {{- include "ausi-platform.labels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: universal-kernel
+          image: "{{ .Values.kernel.image.repository }}:{{ .Values.kernel.image.tag }}"
+          imagePullPolicy: {{ .Values.kernel.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            - name: NODE_ROLE
+              value: "KERNEL_LEADER"
+            - name: SPIRE_AGENT_ADDR
+              value: "/tmp/spire-agent/public/api.sock"
+          resources:
+            {{- toYaml .Values.kernel.resources | nindent 12 }}
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /tmp/spire-agent/public
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
+        - name: tmp
+          emptyDir: {}

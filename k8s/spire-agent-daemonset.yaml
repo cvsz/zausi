@@ -1,0 +1,39 @@
+# SPIRE attestation agent (per-node DaemonSet).
+# CAUTION: privileged + hostPID/hostNetwork are inherent to the k8s PSAT
+# attestation plugin; this is upstream SPIRE's documented deployment posture.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-agent
+  namespace: ausi-core
+spec:
+  selector:
+    matchLabels:
+      app: spire-agent
+  template:
+    metadata:
+      labels:
+        app: spire-agent
+    spec:
+      hostPID: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: spire-agent
+          image: ghcr.io/spiffe/spire-agent:1.8.0
+          args: ["-config", "/opt/spire/conf/agent/agent.conf"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: spire-config
+              mountPath: /opt/spire/conf/agent
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+      volumes:
+        - name: spire-config
+          configMap:
+            name: spire-agent-config
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
