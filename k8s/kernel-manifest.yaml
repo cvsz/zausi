@@ -1,0 +1,66 @@
+# AUSI Model Developer Infrastructure Platform — Kubernetes production manifests
+# Adopted from the blueprint conversation (2026-11-04) into version control.
+# NOTE: images under registry.ausi.internal are placeholders until the synthesis
+# pipeline (Layer 3 of the blueprint) publishes real, SHA-pinned artifacts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ausi-cognitive-kernel
+  namespace: ausi-core
+  labels:
+    app.kubernetes.io/name: ausi-cognitive-kernel
+    app.kubernetes.io/layer: layer-1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cognitive-kernel
+  template:
+    metadata:
+      labels:
+        app: cognitive-kernel
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - cognitive-kernel
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: steering-core
+          image: registry.ausi.internal/core/steering-engine:v1.0.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+          ports:
+            - containerPort: 8080
+              name: grpc-reasoning
+          resources:
+            requests:
+              cpu: "16"
+              memory: "64Gi"
+              nvidia.com/gpu: "2"
+            limits:
+              cpu: "32"
+              memory: "128Gi"
+              nvidia.com/gpu: "4"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ausi-cognitive-kernel-svc
+  namespace: ausi-core
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: grpc
+  selector:
+    app: cognitive-kernel

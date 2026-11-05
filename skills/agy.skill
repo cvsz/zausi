@@ -1,0 +1,46 @@
+# AGY Skill — Autonomous GitOps Yielding (AUSI Layer-4 operator helper)
+
+**Name:** agy
+**Version:** 0.1.0
+**Date:** 2026-11-04
+**Status:** Draft skill definition for review. Executable bindings are TODO until the AUSI registry ships real images (see `docs/AUSI_ARCHITECTURE.md` caveats).
+
+## Purpose
+
+`agy` is the operator-facing skill that walks a human through the validate → plan → apply → audit lifecycle of the AUSI Model Developer platform (`terraform/`, `helm/ausi-platform/`, `k8s/`). It exists so infrastructure mutation is always: staged, diffed, approved by a person, and evidence-logged — matching the Tier-3 approval requirement in `docs/AUSI-SUPER-ULTRA-ORCHESTRATOR-BLUEPRINT.md`.
+
+## Trigger phrases
+
+- "deploy ausi platform", "apply ausi terraform", "ausi helm upgrade"
+- "audit ausi cluster", "check spire attestation", "verify sandbox isolation"
+
+## Inputs
+
+| Field | Required | Description |
+| :-- | :-- | :-- |
+| `stage` | yes | one of `validate`, `plan`, `apply`, `audit` |
+| `namespace` | no (default `ausi-core`) | target namespace |
+| `operator_ticket` | yes for `apply` | change-ticket id recorded in the evidence log |
+
+## Procedure
+
+1. **validate** — run `helm lint helm/ausi-platform`; `terraform -chdir=terraform init -backend=false && terraform -chdir=terraform validate`. Abort on any nonzero exit; emit findings as an EvidenceRecord (blueprint §3 schema).
+2. **plan** — `terraform -chdir=terraform plan -out=ausi-deployment.tfplan`. Print resource delta summary (create/change/destroy counts). Destroy-count > 0 ⇒ escalate to explicit second confirmation.
+3. **apply** — refuse unless (a) `operator_ticket` supplied, (b) plan was generated < 24h ago, (c) caller is an authenticated human session (never invoked from CI). Then `terraform -chdir=terraform apply ausi-deployment.tfplan`.
+4. **audit** — verify postures per `docs/AUSI-OPERATIONS-GUIDE.md` Stage 5: kernel pod readiness, SPIRE socket presence, NetworkPolicy + RuntimeClass existence, PSA enforcement labels on both namespaces.
+
+## Guardrails (hard)
+
+- The skill never stores kubeconfig or Vault tokens; it shells out to pre-authenticated local CLIs only.
+- `apply` is single-shot: no retries, no auto-rollback loop; failures hand control back to the operator with logs.
+- All four stages append `{stage, timestamp, actor, artifact_hash, result}` to the evidence log; the chain is hash-linked per blueprint §3.
+
+## Bindings (TODO)
+
+```
+entrypoint: scripts/agy.py        # not yet implemented — intentionally absent
+requires:   [terraform>=1.5, helm>=3.12, kubectl]
+timeout_s:  900
+```
+
+Until `scripts/agy.py` lands with unit tests wired into `make test-unit`, this document is specification-only; do not reference `make opencode-agy` expecting execution.

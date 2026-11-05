@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ausi-platform
+description: Helm chart for Super Ultra Artificial Universal Superintelligence (AUSI) Model Developer Platform (policy-governed orchestration control plane; see docs/AUSI-SUPER-ULTRA-ORCHESTRATOR-BLUEPRINT.md)
+type: application
+version: 1.0.0
+appVersion: "1.0.0-rsi"
