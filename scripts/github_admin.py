@@ -30,8 +30,7 @@ def gh_api(method: str, endpoint: str, payload: dict[str, Any] | None = None) ->
         cmd,
         input=json.dumps(payload) if payload is not None else None,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     if proc.returncode != 0:
