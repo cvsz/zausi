@@ -51,7 +51,7 @@ jobs:
           grep -E "kind:|name:" rendered-output.yaml | head -n 30
 
       - name: Upload Rendered Manifests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rendered-helm-manifests
           path: rendered-output.yaml
